@@ -1,0 +1,36 @@
+{
+    "name": "cmandersen/bitwise",
+    "description": "A bitwise operator package for making it easier to use bitwise columns in Eloquent models",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Cmandersen\\Bitwise\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Christian Morgan Andersen",
+            "email": "me@cma.dk"
+        }
+    ],
+    "require": {
+        "php": "^8.0",
+        "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0|^10.0|^11.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Cmandersen\\Bitwise\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Cmandersen\\Bitwise\\BitwiseServiceProvider"
+            ]
+        }
+    }
+}

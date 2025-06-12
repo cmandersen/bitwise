@@ -1,0 +1,5 @@
+/vendor/
+CLAUDE.md
+.claude/
+.idea
+.DS_Store
