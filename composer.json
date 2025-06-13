@@ -29,6 +29,12 @@
             "Cmandersen\\Bitwise\\Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "coverage": "vendor/bin/phpunit --coverage-text",
+        "delint": "vendor/bin/pint",
+        "lint": "vendor/bin/pint --test"
+    },
     "extra": {
         "laravel": {
             "providers": [
