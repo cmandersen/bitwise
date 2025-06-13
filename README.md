@@ -1,6 +1,11 @@
 # Laravel Bitwise Package
 
-A Laravel package that makes it easy to work with bitwise flags in Eloquent models. Store multiple boolean flags efficiently in a single integer database column.
+A Laravel package that makes it easy to work with bitwise flags in Eloquent models. Store multiple boolean flags efficiently in a single integer database column with natural query syntax.
+
+## Requirements
+
+- PHP 8.0 or higher
+- Laravel 9.x, 10.x, 11.x, or 12.x
 
 ## Installation
 
@@ -12,31 +17,24 @@ composer require cmandersen/bitwise
 
 The package will automatically register itself via Laravel's package discovery.
 
-## Basic Usage
+## Setup Your Database
 
-### 1. Define Your Flags
-
-First, define your bitwise flags. You can do this in several ways:
+Create your database column as an unsigned integer:
 
 ```php
-use Cmandersen\Bitwise\Bitwise;
-
-// Method 1: Auto-generate flags from names
-$flags = Bitwise::generateFlags(['read', 'write', 'delete', 'admin']);
-// Results in: ['read' => 1, 'write' => 2, 'delete' => 4, 'admin' => 8]
-
-// Method 2: Generate from associative array with mixed values
-$flags = Bitwise::generateFromAssoc([
-    'read' => null,      // Auto-assigned: 1
-    'write' => 16,       // Manual value: 16
-    'delete' => null,    // Auto-assigned: 32 (next available)
-    'admin' => true,     // Auto-assigned: 64
-]);
+// In your migration
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->unsignedInteger('permissions')->default(0);
+    $table->unsignedInteger('features')->default(0);
+    $table->timestamps();
+});
 ```
 
-### 2. Use in Your Eloquent Models
+## Cast Your Model Attributes
 
-Add bitwise casting to your Eloquent models:
+Add bitwise casting to your Eloquent model attributes:
 
 ```php
 use Illuminate\Database\Eloquent\Model;
@@ -44,30 +42,24 @@ use Cmandersen\Bitwise\AsBitwise;
 
 class User extends Model
 {
-    protected $casts = [
-        // Method 1: Auto-generate flags
-        'permissions' => AsBitwise::class . ':read,write,delete,admin',
-        
-        // Method 2: Use predefined flags
-        'settings' => AsBitwise::class,
-    ];
-    
-    // Or define flags with explicit values
     protected function casts(): array
     {
         return [
-            'permissions' => AsBitwise::flags([
-                'read' => 1,
-                'write' => 2,
-                'delete' => 4,
-                'admin' => 8,
-            ]),
+            // Method 1: Auto-generate flags from names
+            'permissions' => AsBitwise::auto(['read', 'write', 'delete', 'admin']),
+            
+            // Method 2: Define flags with explicit values
+            'features' => AsBitwise::flags(['notifications' => 1, 'dark_mode' => 2, 'beta' => 4]),
+            
+            // Method 3: Shorthand syntax
+            'roles' => 'bitwise:user,moderator,admin',
+            'settings' => 'bitwise:email_notifications,push_notifications,sms_notifications',
         ];
     }
 }
 ```
 
-### 3. Working with Flags
+## Working with Flags
 
 Once cast, your attribute becomes a `BitwiseCollection` with many helpful methods:
 
@@ -113,7 +105,68 @@ $user->permissions = $user->permissions->all();
 $user->save();
 ```
 
-### 4. Array-like Access
+## Querying Models by Flags
+
+The package automatically adds powerful query methods to all your models. No traits or additional setup required!
+
+### Basic Queries
+
+```php
+// Find users who have 'read' permission
+$readUsers = User::whereBitwise('permissions', 'read')->get();
+
+// Find users who have both 'read' AND 'write' permissions
+$readWriteUsers = User::whereBitwise('permissions', ['read', 'write'])->get();
+
+// Find users who have ANY of the specified permissions
+$moderatorUsers = User::whereHasAnyBitwise('permissions', ['write', 'delete'])->get();
+
+// Find users who DON'T have admin permissions
+$regularUsers = User::whereDoesntHaveBitwise('permissions', 'admin')->get();
+
+// Find users with EXACTLY the 'read' permission (no other permissions)
+$readOnlyUsers = User::whereBitwiseEquals('permissions', 'read')->get();
+```
+
+### Combining with Other Conditions
+
+```php
+// Multiple flag combinations
+$multiplePermissions = User::whereInBitwise('permissions', ['read', 'admin'])->get();
+$mixedValues = User::whereInBitwise('permissions', [
+    'read',              // Single permission
+    ['read', 'write'],   // Multiple permissions (has both)
+])->get();
+
+// Exclude specific permissions
+$excludePermissions = User::whereNotInBitwise('permissions', ['admin', 'delete'])->get();
+
+// OR conditions
+$readOrWrite = User::whereBitwise('permissions', 'read')
+    ->orWhereBitwise('permissions', 'write')
+    ->get();
+
+// Complex queries with other conditions
+$complexQuery = User::where('name', 'like', '%admin%')
+    ->whereHasBitwise('permissions', 'admin')
+    ->whereDoesntHaveBitwise('features', 'beta')
+    ->orderBy('created_at', 'desc')
+    ->get();
+```
+
+### Complete Query Reference
+
+All methods support OR variations (prefix with `or`):
+
+- `whereBitwise($column, $flags)` - Has specified flags
+- `whereHasBitwise($column, $flags)` - Alias for whereBitwise
+- `whereHasAnyBitwise($column, $flags)` - Has any of the flags
+- `whereDoesntHaveBitwise($column, $flags)` - Doesn't have flags
+- `whereBitwiseEquals($column, $flags)` - Has exactly these flags
+- `whereInBitwise($column, $values)` - Bitwise equivalent of whereIn
+- `whereNotInBitwise($column, $values)` - Bitwise equivalent of whereNotIn
+
+## Array-like Access
 
 `BitwiseCollection` implements `ArrayAccess`, so you can use array syntax:
 
@@ -127,7 +180,7 @@ if ($user->permissions['read']) {
 // $user->permissions['read'] = true; // This will throw an exception
 ```
 
-### 5. Setting Flags During Creation/Update
+## Setting Flags During Creation/Update
 
 You can set flags in several ways:
 
@@ -156,9 +209,27 @@ User::create([
 
 ## Advanced Usage
 
-### Working with Individual Flags
+For more advanced use cases, you can work with individual flags and utilities:
 
-You can create and work with individual `BitwiseFlag` objects:
+### Manual Flag Generation
+
+```php
+use Cmandersen\Bitwise\Bitwise;
+
+// Auto-generate flags from names
+$flags = Bitwise::generateFlags(['read', 'write', 'delete', 'admin']);
+// Results in: ['read' => 1, 'write' => 2, 'delete' => 4, 'admin' => 8]
+
+// Generate from associative array with mixed values
+$flags = Bitwise::generateFromAssoc([
+    'read' => null,      // Auto-assigned: 1
+    'write' => 16,       // Manual value: 16
+    'delete' => null,    // Auto-assigned: 32 (next available)
+    'admin' => true,     // Auto-assigned: 64
+]);
+```
+
+### Working with Individual Flags
 
 ```php
 use Cmandersen\Bitwise\BitwiseFlag;
@@ -179,50 +250,6 @@ $readFlag->toggleBit(4);         // 5 (4 ^ 1 = 5)
 
 // Combine flags
 $combined = $readFlag->combine($writeFlag); // 3 (1 | 2 = 3)
-```
-
-### Utility Methods
-
-The `Bitwise` class provides several utility methods:
-
-```php
-use Cmandersen\Bitwise\Bitwise;
-
-// Check if a number is a power of 2
-Bitwise::isPowerOfTwo(8);  // true
-Bitwise::isPowerOfTwo(6);  // false
-
-// Get the next power of 2
-Bitwise::nextPowerOfTwo(5);  // 8
-Bitwise::nextPowerOfTwo(8);  // 8
-
-// Create a cast instance
-$cast = Bitwise::createCast(['read', 'write', 'delete']);
-```
-
-### String-based Flag Definition
-
-You can define flags using a string format:
-
-```php
-// In your model cast
-protected $casts = [
-    'permissions' => AsBitwise::class . ':read=1,write=2,delete=4,admin=8',
-];
-```
-
-## Database Schema
-
-Create your database column as an unsigned integer:
-
-```php
-// In your migration
-Schema::create('users', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    $table->unsignedInteger('permissions')->default(0);
-    $table->timestamps();
-});
 ```
 
 ## Methods Reference
@@ -260,11 +287,6 @@ Schema::create('users', function (Blueprint $table) {
 | `setBit($value)` | Set this flag in value | `int` |
 | `unsetBit($value)` | Unset this flag in value | `int` |
 | `toggleBit($value)` | Toggle this flag in value | `int` |
-
-## Requirements
-
-- PHP 8.0 or higher
-- Laravel 9.x, 10.x, 11.x, or 12.x
 
 ## License
 

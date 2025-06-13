@@ -2,6 +2,7 @@
     "name": "cmandersen/bitwise",
     "description": "A bitwise operator package for making it easier to use bitwise columns in Eloquent models",
     "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Cmandersen\\Bitwise\\": "src/"
@@ -16,10 +17,12 @@
     "require": {
         "php": "^8.0",
         "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0",
-        "illuminate/support": "^9.0|^10.0|^11.0|^12.0"
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/database": "^9.0|^10.0|^11.0|^12.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0|^10.0|^11.0"
+        "phpunit/phpunit": "^9.0|^10.0|^11.0",
+        "laravel/pint": "^1.0"
     },
     "autoload-dev": {
         "psr-4": {
