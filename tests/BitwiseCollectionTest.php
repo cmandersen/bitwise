@@ -4,13 +4,19 @@ namespace Cmandersen\Bitwise\Tests;
 
 use Cmandersen\Bitwise\BitwiseCollection;
 use Cmandersen\Bitwise\BitwiseFlag;
-use PHPUnit\Framework\TestCase;
+use Cmandersen\Bitwise\BitwiseServiceProvider;
+use Orchestra\Testbench\TestCase;
 
 class BitwiseCollectionTest extends TestCase
 {
     private array $flags;
 
     private BitwiseCollection $collection;
+
+    protected function getPackageProviders($app)
+    {
+        return [BitwiseServiceProvider::class];
+    }
 
     protected function setUp(): void
     {
@@ -172,6 +178,12 @@ class BitwiseCollectionTest extends TestCase
     {
         $this->expectException(\BadMethodCallException::class);
         $this->collection['test'] = true;
+    }
+
+    public function test_array_access_unset_immutability()
+    {
+        $this->expectException(\BadMethodCallException::class);
+        unset($this->collection['read']);
     }
 
     public function test_countable()

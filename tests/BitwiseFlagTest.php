@@ -3,7 +3,8 @@
 namespace Cmandersen\Bitwise\Tests;
 
 use Cmandersen\Bitwise\BitwiseFlag;
-use PHPUnit\Framework\TestCase;
+use Cmandersen\Bitwise\BitwiseServiceProvider;
+use Orchestra\Testbench\TestCase;
 
 class BitwiseFlagTest extends TestCase
 {
@@ -12,6 +13,11 @@ class BitwiseFlagTest extends TestCase
     private BitwiseFlag $writeFlag;
 
     private BitwiseFlag $deleteFlag;
+
+    protected function getPackageProviders($app)
+    {
+        return [BitwiseServiceProvider::class];
+    }
 
     protected function setUp(): void
     {

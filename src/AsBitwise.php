@@ -35,9 +35,26 @@ class AsBitwise implements CastsAttributes
         $flags = [];
         $pairs = explode(',', $flagString);
 
+        // Check if this is a simple comma-separated list of flag names (no = signs)
+        $isSimpleList = true;
+        foreach ($pairs as $pair) {
+            if (str_contains($pair, '=')) {
+                $isSimpleList = false;
+                break;
+            }
+        }
+
+        if ($isSimpleList) {
+            // Auto-generate flags from names
+            $flagNames = array_map('trim', $pairs);
+
+            return Bitwise::generateFlags($flagNames);
+        }
+
+        // Parse explicit name=value pairs
         foreach ($pairs as $pair) {
             $parts = explode('=', trim($pair));
-            if (count($parts) !== 2) {
+            if (count($parts) !== 2 || empty($parts[0]) || empty($parts[1])) {
                 throw new InvalidArgumentException("Invalid flag format: {$pair}. Expected 'name=value'.");
             }
 

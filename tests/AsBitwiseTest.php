@@ -4,12 +4,18 @@ namespace Cmandersen\Bitwise\Tests;
 
 use Cmandersen\Bitwise\AsBitwise;
 use Cmandersen\Bitwise\BitwiseCollection;
+use Cmandersen\Bitwise\BitwiseServiceProvider;
 use InvalidArgumentException;
-use PHPUnit\Framework\TestCase;
+use Orchestra\Testbench\TestCase;
 
 class AsBitwiseTest extends TestCase
 {
     private array $testFlags;
+
+    protected function getPackageProviders($app)
+    {
+        return [BitwiseServiceProvider::class];
+    }
 
     protected function setUp(): void
     {
@@ -170,9 +176,10 @@ class AsBitwiseTest extends TestCase
     public function test_string_flag_parsing_throws_exception_for_invalid_format()
     {
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid flag format: invalid. Expected \'name=value\'.');
+        $this->expectExceptionMessage('Invalid flag format: invalid=. Expected \'name=value\'.');
 
-        new AsBitwise('invalid');
+        // This should fail because the value part is empty after the =
+        new AsBitwise('invalid=');
     }
 
     public function test_string_flag_parsing_throws_exception_for_invalid_value()
@@ -181,5 +188,45 @@ class AsBitwiseTest extends TestCase
         $this->expectExceptionMessage('Flag value must be a power of 2: 3');
 
         new AsBitwise('read=3');
+    }
+
+    public function test_validation_throws_exception_for_non_string_flag_name()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Flag name must be a non-empty string.');
+
+        new AsBitwise([123 => 1]);
+    }
+
+    public function test_validation_throws_exception_for_non_positive_integer_value()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Flag value must be a positive integer: -1');
+
+        new AsBitwise(['read' => -1]);
+    }
+
+    public function test_validation_throws_exception_for_zero_value()
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Flag value must be a positive integer: 0');
+
+        new AsBitwise(['read' => 0]);
+    }
+
+    public function test_string_flag_parsing_with_spaces()
+    {
+        $cast = new AsBitwise('read=1, write=2 , delete = 4');
+        $result = $cast->get(null, 'test', 7, []);
+        $this->assertEquals(['read', 'write', 'delete'], $result->getFlagNames());
+    }
+
+    public function test_set_method_with_bitwise_collection()
+    {
+        $cast = new AsBitwise($this->testFlags);
+        $collection = new BitwiseCollection(3, $this->testFlags);
+
+        $result = $cast->set(null, 'test', $collection, []);
+        $this->assertEquals(3, $result);
     }
 }

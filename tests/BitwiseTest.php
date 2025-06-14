@@ -4,10 +4,16 @@ namespace Cmandersen\Bitwise\Tests;
 
 use Cmandersen\Bitwise\AsBitwise;
 use Cmandersen\Bitwise\Bitwise;
-use PHPUnit\Framework\TestCase;
+use Cmandersen\Bitwise\BitwiseServiceProvider;
+use Orchestra\Testbench\TestCase;
 
 class BitwiseTest extends TestCase
 {
+    protected function getPackageProviders($app)
+    {
+        return [BitwiseServiceProvider::class];
+    }
+
     public function test_generate_flags()
     {
         $flags = Bitwise::generateFlags(['read', 'write', 'delete', 'admin']);
