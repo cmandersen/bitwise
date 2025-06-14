@@ -13,6 +13,7 @@
         "single_trait_insert_per_statement": true,
         "array_syntax": {
             "syntax": "short"
-        }
+        },
+        "use_arrow_functions": true
     }
 }
