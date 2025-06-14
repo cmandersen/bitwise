@@ -3,6 +3,7 @@
     "description": "A bitwise operator package for making it easier to use bitwise columns in Eloquent models",
     "type": "library",
     "license": "MIT",
+    "version": "1.0.0",
     "autoload": {
         "psr-4": {
             "Cmandersen\\Bitwise\\": "src/"
