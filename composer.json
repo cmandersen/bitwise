@@ -1,6 +1,6 @@
 {
     "name": "cmandersen/bitwise",
-    "description": "A bitwise operator package for making it easier to use bitwise columns in Eloquent models",
+    "description": "A bitwise operator package for making it easier to use bitwise columns in Eloquent models by adding a custom cast class and query functionality",
     "type": "library",
     "license": "MIT",
     "version": "1.0.0",
